@@ -25,6 +25,16 @@ async def receive_text(reader: asyncio.StreamReader) -> str:
         payload += await reader.read(payload_size - len(payload))
     return payload.decode('utf8')
 
+async def ping_clients():
+    """Send ping to all clients."""
+    while True:
+        try:
+            await asyncio.sleep(5)
+            for client in clients:
+                await send_text(client[1], 'ping')
+        except Exception as e:
+            print(f'Error (ping_clients): {e}')
+
 async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
     """Handle client connection."""
     print('Client connected')
@@ -32,19 +42,23 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     try:
         while True:
             text = await receive_text(reader)
+            if text == 'ping':
+                continue
             print(f'Received: {text}')
             for client in clients:
                 await send_text(client[1], text)
     except Exception as e:
-        print(f'Error: {e}')
+        print(f'Error (handle_client): {e}')
     finally:
         clients.remove((reader, writer))
         writer.close()
         print('Client disconnected')
 
 async def run_server():
+    """Run server."""
     server = await asyncio.start_server(handle_client, 'localhost', 8888)
     async with server:
+        asyncio.create_task(ping_clients())
         await server.serve_forever()
 
 

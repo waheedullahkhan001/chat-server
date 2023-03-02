@@ -37,8 +37,8 @@ async def ping_clients():
 
 async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
     """Handle client connection."""
-    print(f'Client connected (Current clients: {len(clients)})')
     clients.append((reader, writer))
+    print(f'Client connected (Current clients: {len(clients)})')
     try:
         while True:
             text = await receive_text(reader)

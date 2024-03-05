@@ -1,6 +1,8 @@
 import asyncio
 
 
+HOST = '0.0.0.0'
+PORT = 8888
 HEADER_SIZE = 64
 
 clients = []
@@ -56,7 +58,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
 
 async def run_server():
     """Run server."""
-    server = await asyncio.start_server(handle_client, 'localhost', 8888)
+    server = await asyncio.start_server(handle_client, HOST, PORT)
     async with server:
         asyncio.create_task(ping_clients())
         await server.serve_forever()

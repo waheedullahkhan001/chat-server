@@ -1,9 +1,12 @@
 import asyncio
+import struct
 
 
 HOST = '0.0.0.0'
 PORT = 8888
-HEADER_SIZE = 64
+
+DEBUG = False
+HEADER_SIZE = 4
 
 clients = []
 
@@ -11,7 +14,7 @@ clients = []
 async def send_text(writer: asyncio.StreamWriter, text: str):
     """Send text to client."""
     payload = text.encode('utf8')
-    header = f'{len(payload):<{HEADER_SIZE}}'.encode('utf8')
+    header = struct.pack('I', len(payload))
     writer.write(header + payload)
     await writer.drain()
 
@@ -20,7 +23,7 @@ async def receive_text(reader: asyncio.StreamReader) -> str:
     header = await reader.read(HEADER_SIZE)
     while len(header) < HEADER_SIZE:
         header += await reader.read(HEADER_SIZE - len(header))
-    payload_size = int(header.decode('utf8').strip())
+    payload_size = struct.unpack('I', header)[0]
 
     payload = await reader.read(payload_size)
     while len(payload) < payload_size:
@@ -44,9 +47,8 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     try:
         while True:
             text = await receive_text(reader)
-            if text == 'ping':
-                continue
-            print(f'Received: {text}')
+            if DEBUG:
+                print(f'[INC] {text}')
             for client in clients:
                 await send_text(client[1], text)
     except Exception as e:
